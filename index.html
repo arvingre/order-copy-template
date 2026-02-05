@@ -3,72 +3,274 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>一键复制下单模板</title>
+  <title>一键复制下单模板（带下拉）</title>
   <style>
     body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, "Noto Sans", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif; margin: 0; padding: 24px; background: #0f1214; color: #f5f7f9; }
-    .card { max-width: 720px; margin: 0 auto; background: #151a1f; border: 1px solid #26313a; border-radius: 12px; padding: 20px; }
-    h1 { font-size: 18px; margin: 0 0 12px; }
-    textarea { width: 100%; height: 180px; padding: 12px; border-radius: 8px; border: 1px solid #2a3640; background: #0f1418; color: #dfe6ee; resize: vertical; }
-    .row { display: flex; gap: 12px; margin-top: 12px; flex-wrap: wrap; }
+    .wrap { max-width: 900px; margin: 0 auto; display: grid; gap: 16px; }
+    .card { background: #151a1f; border: 1px solid #26313a; border-radius: 12px; padding: 16px; }
+    h1 { font-size: 18px; margin: 0 0 8px; }
+    h2 { font-size: 16px; margin: 8px 0; color: #c7d0da; }
+    label { font-size: 13px; color: #9aa7b5; display: block; margin: 8px 0 6px; }
+    select, input[type="text"], input[type="number"], textarea { width: 100%; padding: 10px 12px; border-radius: 8px; border: 1px solid #2a3640; background: #0f1418; color: #dfe6ee; }
+    textarea { min-height: 140px; resize: vertical; }
+    .row { display: grid; grid-template-columns: repeat(12, 1fr); gap: 10px; align-items: end; }
+    .col-3 { grid-column: span 3; }
+    .col-4 { grid-column: span 4; }
+    .col-6 { grid-column: span 6; }
+    .col-8 { grid-column: span 8; }
+    .col-9 { grid-column: span 9; }
+    .col-12 { grid-column: span 12; }
     button, a.btn { appearance: none; border: 0; padding: 10px 14px; border-radius: 8px; background: #2b8a3e; color: white; font-weight: 600; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; }
     button.secondary, a.secondary { background: #2d6cdf; }
-    button.ghost, a.ghost { background: #3a424a; }
-    .msg { margin-top: 10px; font-size: 14px; color: #9ac69a; min-height: 20px; }
-    .hint { color: #9aa7b5; font-size: 13px; margin-top: 8px; }
-    .footer { margin-top: 16px; font-size: 12px; color: #738295; }
-    code { background: #0f1418; padding: 2px 6px; border-radius: 6px; border: 1px solid #2a3640; }
+    button.ghost { background: #3a424a; }
+    button.danger { background: #ab2b36; }
+    table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+    th, td { border-bottom: 1px solid #26313a; padding: 8px; text-align: left; font-size: 14px; }
+    .right { text-align: right; }
+    .muted { color: #9aa7b5; font-size: 12px; }
+    .msg { font-size: 14px; min-height: 20px; }
   </style>
 </head>
 <body>
-  <div class="card">
-    <h1>一键复制下单模板</h1>
-    <p class="hint">点“复制模板”后，返回 Telegram 的 @order168，长按输入框粘贴即可。</p>
-
-    <textarea id="tpl" readonly>
-收货地址：
-菜品与数量：
-1) 代号 x 数量
-2) …
-付款方式：现金 / GCash / 易换
-送达时间：尽快（如需指定时间请注明）
-备注：（口味/忌口）
-    </textarea>
-
-    <div class="row">
-      <button id="copyBtn">复制模板</button>
-      <a id="backBtn" class="btn secondary" href="https://t.me/order168" target="_blank">返回 @order168</a>
-      <button id="editBtn" class="ghost">复制并提示</button>
+  <div class="wrap">
+    <div class="card">
+      <h1>一键复制下单模板（带下拉）</h1>
+      <div class="muted">操作步骤：1) 选择菜品与数量并添加到清单 2) 填写地址/付款方式 3) 复制模板 → 返回 @order168 粘贴发送</div>
     </div>
-    <div class="msg" id="msg"></div>
-    <p class="footer">若复制失败，请手动全选模板并复制。iOS/Android 受系统剪贴板限制，建议用系统自带浏览器打开。</p>
+
+    <div class="card">
+      <h2>1) 菜品与数量</h2>
+      <div class="row">
+        <div class="col-6">
+          <label>菜品（代号 - 名称 - 价格）</label>
+          <select id="dishSelect"></select>
+        </div>
+        <div class="col-3">
+          <label>数量</label>
+          <input id="qty" type="number" min="1" value="1" />
+        </div>
+        <div class="col-3">
+          <label>粉类代码（可选）</label>
+          <select id="noodleCode">
+            <option value="">（默认不标注）</option>
+            <option value="A">A 细切粉</option>
+            <option value="B">B 河粉</option>
+          </select>
+        </div>
+        <div class="col-12">
+          <label>口味/忌口（可选）</label>
+          <input id="taste" type="text" placeholder="例：不辣/少盐/花生过敏禁用" />
+        </div>
+        <div class="col-12">
+          <button id="addItem">添加到清单</button>
+          <button id="clearItems" class="danger">清空清单</button>
+        </div>
+      </div>
+
+      <table id="itemsTable">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>代号</th>
+            <th>名称</th>
+            <th class="right">数量</th>
+            <th>备注</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+      <div class="muted">说明：生成的“菜品与数量”将按 1) 代号 x 数量（口味/忌口；粉类代码） 的格式输出。</div>
+    </div>
+
+    <div class="card">
+      <h2>2) 配送与支付</h2>
+      <div class="row">
+        <div class="col-12">
+          <label>收货地址</label>
+          <input id="addr" type="text" placeholder="请输入收货地址" />
+        </div>
+        <div class="col-6">
+          <label>付款方式</label>
+          <select id="pay">
+            <option value="现金">现金</option>
+            <option value="GCash">GCash</option>
+            <option value="易换">易换</option>
+          </select>
+        </div>
+        <div class="col-6">
+          <label>送达时间（默认：尽快）</label>
+          <input id="eta" type="text" placeholder="留空=尽快；或填写 例如：今天19:30" />
+        </div>
+        <div class="col-12">
+          <label>备注（可留空）</label>
+          <input id="note" type="text" placeholder="例：一次性餐具2套 / 先电话联系" />
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>3) 生成与复制</h2>
+      <div class="row">
+        <div class="col-12">
+          <label>预览（将被复制）</label>
+          <textarea id="preview" readonly></textarea>
+        </div>
+        <div class="col-12">
+          <button id="gen">生成模板</button>
+          <button id="copy" class="secondary">复制模板</button>
+          <a class="btn ghost" href="https://t.me/order168" target="_blank">返回 @order168 粘贴发送</a>
+        </div>
+        <div class="col-12 msg" id="msg"></div>
+        <div class="col-12 muted">客户姓名默认使用你的 Telegram 昵称/用户名；如无特别备注，送达时间默认“尽快”。</div>
+      </div>
+    </div>
   </div>
 
   <script>
-    const tpl = document.getElementById('tpl');
-    const msg = document.getElementById('msg');
+    // 菜单数据（来自你的表；修正L4/L7英文名）
+    const MENU = [
+      {cat: 'Deluxe Guilin Rice Noodles', items: [
+        {code:'G0', cn:'豪华桂林米粉', en:'Deluxe Guilin Rice Noodles', price:'600p'},
+        {code:'G1', cn:'锅烧牛肉米粉', en:'Braised Beef Rice Noodles', price:'450p'},
+        {code:'G2', cn:'锅烧桂林米粉', en:'Braised Pork Guilin Rice Noodles', price:'450p'},
+        {code:'G3', cn:'牛肉桂林米粉', en:'Beef Guilin Rice Noodles', price:'450p'},
+      ]},
+      {cat: 'Signature Guilin Spicy and Sour Noodles', items: [
+        {code:'M0', cn:'猪杂酸辣煮粉', en:'Pork-based S&S Noodles Soup', price:'350p'},
+        {code:'M1', cn:'牛肉酸辣煮粉', en:'Beef Spicy and Sour Noodle Soup', price:'350p'},
+        {code:'M2', cn:'瘦肉酸辣煮粉', en:'Lean Meat Spicy and Sour Noodle Soup', price:'350p'},
+      ]},
+      {cat: 'Nanning Old Friend Boiled Noodles', items: [
+        {code:'N0', cn:'猪杂老友煮粉', en:'Pig Miscellaneous Old Friend Boiled Powder', price:'350p'},
+        {code:'N1', cn:'牛肉老友煮粉', en:'Beef Old Friend Boiled Powder', price:'350p'},
+        {code:'N2', cn:'瘦肉老友煮粉', en:'Lean Meat Old Friend Cooking Powder', price:'350p'},
+      ]},
+      {cat: 'Signature Guilin Spicy Noodles', items: [
+        {code:'A0', cn:'猪杂麻辣煮粉', en:'Pork-based Spicy Noodles Soup', price:'350p'},
+        {code:'A1', cn:'牛肉麻辣煮粉', en:'Beef Spicy Noodle Soup', price:'350p'},
+        {code:'A2', cn:'瘦肉麻辣煮粉', en:'Lean Meat Spicy Noodle Soup', price:'350p'},
+      ]},
+      {cat: 'Add-on Series', items: [
+        {code:'L1', cn:'猪杂', en:'Pork Offal', price:'250p'},
+        {code:'L2', cn:'瘦肉', en:'Lean Meat', price:'250p'},
+        {code:'L3', cn:'脆皮锅烧', en:'Crispy Pan-Fried Dish', price:'250p'},
+        {code:'L4', cn:'卤蛋', en:'Braised Egg', price:'80p'},
+        {code:'L5', cn:'煎蛋', en:'Fried Egg', price:'80p'},
+        {code:'L6', cn:'加粉', en:'Plus Rice Noodles', price:'120p'},
+        {code:'L7', cn:'酸笋', en:'Sour Bamboo Shoots', price:'120p'},
+        {code:'L8', cn:'酸豆角', en:'Pickled Bean Sprouts', price:'120p'},
+      ]},
+    ];
 
-    async function copy(text) {
-      try {
-        if (navigator.clipboard && navigator.clipboard.writeText) {
-          await navigator.clipboard.writeText(text);
-        } else {
-          tpl.removeAttribute('readonly');
-          tpl.select();
-          document.execCommand('copy');
-          tpl.setAttribute('readonly', '');
+    // 初始化下拉
+    const dishSelect = document.getElementById('dishSelect');
+    MENU.forEach(group => {
+      const optgroup = document.createElement('optgroup');
+      optgroup.label = group.cat;
+      group.items.forEach(it => {
+        const opt = document.createElement('option');
+        opt.value = it.code;
+        opt.textContent = `${it.code} — ${it.cn} / ${it.en} — ${it.price}`;
+        opt.dataset.cn = it.cn; opt.dataset.en = it.en; opt.dataset.price = it.price;
+        optgroup.appendChild(opt);
+      });
+      dishSelect.appendChild(optgroup);
+    });
+
+    const items = [];
+    const tbody = document.querySelector('#itemsTable tbody');
+    function renderTable(){
+      tbody.innerHTML = '';
+      items.forEach((it, idx) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${idx+1}</td>
+          <td>${it.code}${it.noodle ? ' ('+it.noodle+')' : ''}</td>
+          <td>${it.cn}</td>
+          <td class="right">${it.qty}</td>
+          <td>${it.taste || ''}</td>
+          <td><button class="ghost" data-rm="${idx}">删除</button></td>
+        `;
+        tbody.appendChild(tr);
+      });
+      tbody.querySelectorAll('button[data-rm]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const i = parseInt(btn.dataset.rm, 10);
+          items.splice(i,1); renderTable();
+        });
+      });
+    }
+
+    document.getElementById('addItem').addEventListener('click', () => {
+      const opt = dishSelect.options[dishSelect.selectedIndex];
+      if(!opt) return;
+      const code = opt.value;
+      const cn = opt.dataset.cn;
+      const en = opt.dataset.en;
+      const qty = Math.max(1, parseInt(document.getElementById('qty').value || '1', 10));
+      const noodle = document.getElementById('noodleCode').value; // A/B/''
+      const taste = document.getElementById('taste').value.trim();
+      items.push({code, cn, en, qty, noodle, taste});
+      renderTable();
+    });
+
+    document.getElementById('clearItems').addEventListener('click', () => {
+      items.splice(0, items.length); renderTable();
+    });
+
+    function buildTemplate(){
+      const addr = document.getElementById('addr').value.trim();
+      const pay = document.getElementById('pay').value;
+      const eta = document.getElementById('eta').value.trim();
+      const note = document.getElementById('note').value.trim();
+      const lines = [];
+      lines.push('收货地址：' + (addr || ''));
+      lines.push('菜品与数量：');
+      if(items.length === 0){ lines.push('1) 代号 x 数量'); }
+      else {
+        items.forEach((it, i) => {
+          const parts = [];
+          parts.push(`${i+1}) ${it.code} x ${it.qty}`);
+          const sub = [];
+          if(it.taste) sub.push(it.taste);
+          if(it.noodle) sub.push('粉类代码 ' + it.noodle);
+          if(sub.length) parts.push('（' + sub.join('；') + '）');
+          lines.push(parts.join(''));
+        });
+      }
+      lines.push('付款方式：' + pay);
+      lines.push('送达时间：' + (eta || '尽快（如需指定时间请注明）'));
+      lines.push('备注：' + (note || '（可留空）'));
+      return lines.join('\n');
+    }
+
+    function copyText(txt){
+      const msg = document.getElementById('msg');
+      const ta = document.getElementById('preview');
+      try{
+        if(navigator.clipboard && navigator.clipboard.writeText){
+          navigator.clipboard.writeText(txt);
+        }else{
+          ta.removeAttribute('readonly'); ta.value = txt; ta.select(); document.execCommand('copy'); ta.setAttribute('readonly','');
         }
         msg.textContent = '已复制到剪贴板，返回 @order168 粘贴即可。';
         msg.style.color = '#9ac69a';
-      } catch (e) {
+      }catch(e){
         msg.textContent = '复制失败，请手动全选并复制。';
         msg.style.color = '#e37a7a';
       }
     }
 
-    document.getElementById('copyBtn').addEventListener('click', () => copy(tpl.value.trim()));
-    document.getElementById('editBtn').addEventListener('click', async () => {
-      await copy(tpl.value.trim());
-      alert('已复制模板。返回 Telegram 的 @order168，粘贴并修改代号/数量后发送即可。');
+    document.getElementById('gen').addEventListener('click', () => {
+      const txt = buildTemplate();
+      document.getElementById('preview').value = txt;
+    });
+
+    document.getElementById('copy').addEventListener('click', () => {
+      const txt = document.getElementById('preview').value || buildTemplate();
+      document.getElementById('preview').value = txt;
+      copyText(txt);
     });
   </script>
 </body>
