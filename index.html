@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>一键复制下单模板</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, "Noto Sans", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif; margin: 0; padding: 24px; background: #0f1214; color: #f5f7f9; }
+    .card { max-width: 720px; margin: 0 auto; background: #151a1f; border: 1px solid #26313a; border-radius: 12px; padding: 20px; }
+    h1 { font-size: 18px; margin: 0 0 12px; }
+    textarea { width: 100%; height: 180px; padding: 12px; border-radius: 8px; border: 1px solid #2a3640; background: #0f1418; color: #dfe6ee; resize: vertical; }
+    .row { display: flex; gap: 12px; margin-top: 12px; flex-wrap: wrap; }
+    button, a.btn { appearance: none; border: 0; padding: 10px 14px; border-radius: 8px; background: #2b8a3e; color: white; font-weight: 600; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; }
+    button.secondary, a.secondary { background: #2d6cdf; }
+    button.ghost, a.ghost { background: #3a424a; }
+    .msg { margin-top: 10px; font-size: 14px; color: #9ac69a; min-height: 20px; }
+    .hint { color: #9aa7b5; font-size: 13px; margin-top: 8px; }
+    .footer { margin-top: 16px; font-size: 12px; color: #738295; }
+    code { background: #0f1418; padding: 2px 6px; border-radius: 6px; border: 1px solid #2a3640; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>一键复制下单模板</h1>
+    <p class="hint">点“复制模板”后，返回 Telegram 的 @order168，长按输入框粘贴即可。</p>
+
+    <textarea id="tpl" readonly>
+收货地址：
+菜品与数量：
+1) 代号 x 数量
+2) …
+付款方式：现金 / GCash / 易换
+送达时间：尽快（如需指定时间请注明）
+备注：（口味/忌口）
+    </textarea>
+
+    <div class="row">
+      <button id="copyBtn">复制模板</button>
+      <a id="backBtn" class="btn secondary" href="https://t.me/order168" target="_blank">返回 @order168</a>
+      <button id="editBtn" class="ghost">复制并提示</button>
+    </div>
+    <div class="msg" id="msg"></div>
+    <p class="footer">若复制失败，请手动全选模板并复制。iOS/Android 受系统剪贴板限制，建议用系统自带浏览器打开。</p>
+  </div>
+
+  <script>
+    const tpl = document.getElementById('tpl');
+    const msg = document.getElementById('msg');
+
+    async function copy(text) {
+      try {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          await navigator.clipboard.writeText(text);
+        } else {
+          tpl.removeAttribute('readonly');
+          tpl.select();
+          document.execCommand('copy');
+          tpl.setAttribute('readonly', '');
+        }
+        msg.textContent = '已复制到剪贴板，返回 @order168 粘贴即可。';
+        msg.style.color = '#9ac69a';
+      } catch (e) {
+        msg.textContent = '复制失败，请手动全选并复制。';
+        msg.style.color = '#e37a7a';
+      }
+    }
+
+    document.getElementById('copyBtn').addEventListener('click', () => copy(tpl.value.trim()));
+    document.getElementById('editBtn').addEventListener('click', async () => {
+      await copy(tpl.value.trim());
+      alert('已复制模板。返回 Telegram 的 @order168，粘贴并修改代号/数量后发送即可。');
+    });
+  </script>
+</body>
+</html>
