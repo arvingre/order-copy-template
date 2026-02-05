@@ -30,9 +30,33 @@
     .right { text-align: right; }
     .muted { color: #9aa7b5; font-size: 12px; }
     .msg { font-size: 14px; min-height: 20px; }
+    /* 设备预览样式 */
+    #previewFrameWrap { width:375px;max-width:100%;margin:0 auto 24px;box-shadow:0 0 0 1px #26313a,0 4px 24px #0006;border-radius:16px;overflow:hidden; }
+    #previewFrame { width:375px;height:812px;border:0;background:#0f1214; }
+    @media (max-width: 600px) {
+      .wrap { padding: 0; }
+      body { padding: 8px; }
+    }
   </style>
 </head>
 <body>
+  <!-- 设备预览功能区 -->
+  <div class="card" style="margin-bottom:16px;">
+    <label>设备预览：</label>
+    <select id="deviceSelect">
+      <option value="375x812">iPhone X (375x812)</option>
+      <option value="390x844">iPhone 12 (390x844)</option>
+      <option value="414x896">iPhone 11 Pro Max (414x896)</option>
+      <option value="360x800">安卓小屏 (360x800)</option>
+      <option value="412x915">Pixel 6 (412x915)</option>
+      <option value="428x926">iPhone 14 Pro Max (428x926)</option>
+      <option value="auto">全屏</option>
+    </select>
+  </div>
+  <div id="previewFrameWrap">
+    <iframe id="previewFrame" src="" ></iframe>
+  </div>
+  <!-- 主功能区 -->
   <div class="wrap">
     <div class="card">
       <h1>一键复制下单模板（带下拉）</h1>
@@ -133,6 +157,29 @@
   </div>
 
   <script>
+    // 设备尺寸切换
+    const deviceSelect = document.getElementById('deviceSelect');
+    const previewFrame = document.getElementById('previewFrame');
+    const previewFrameWrap = document.getElementById('previewFrameWrap');
+    function setFrameSize(val){
+      if(val==='auto'){
+        previewFrame.style.width = '100%';
+        previewFrame.style.height = window.innerHeight-80+'px';
+        previewFrameWrap.style.width = '100%';
+      }else{
+        const [w,h] = val.split('x');
+        previewFrame.style.width = w+'px';
+        previewFrame.style.height = h+'px';
+        previewFrameWrap.style.width = w+'px';
+      }
+    }
+    deviceSelect.addEventListener('change', e=>{
+      setFrameSize(e.target.value);
+    });
+    // 加载本页到iframe
+    previewFrame.src = location.href;
+    setFrameSize(deviceSelect.value);
+
     // 菜单数据
     const MENU = [
       {cat: 'Deluxe Guilin Rice Noodles', items: [
