@@ -16,6 +16,7 @@
     .row { display: grid; grid-template-columns: repeat(12, 1fr); gap: 10px; align-items: end; }
     .col-3 { grid-column: span 3; }
     .col-4 { grid-column: span 4; }
+    .col-5 { grid-column: span 5; }
     .col-6 { grid-column: span 6; }
     .col-8 { grid-column: span 8; }
     .col-9 { grid-column: span 9; }
@@ -35,7 +36,7 @@
   <div class="wrap">
     <div class="card">
       <h1>一键复制下单模板（带下拉）</h1>
-      <div class="muted">操作步骤：1) 选择菜品与数量并添加到清单 2) 填写地址/付款方式 3) 复制模板 → 返回 @order168 粘贴发送</div>
+      <div class="muted">操作步骤：1) 选择菜品与数量并添加到清单 2) 填写地址/付款方式/总金额 3) 复制模板 → 返回 @order168 粘贴发送</div>
     </div>
 
     <div class="card">
@@ -50,11 +51,11 @@
           <input id="qty" type="number" min="1" value="1" />
         </div>
         <div class="col-3">
-          <label>粉类代码（可选）</label>
+          <label>粉类代码（默认：A 圆粉）</label>
           <select id="noodleCode">
-            <option value="">（默认不标注）</option>
-            <option value="A">A 细切粉</option>
+            <option value="A" selected>A 圆粉（默认）</option>
             <option value="B">B 河粉</option>
+            <option value="">不标注</option>
           </select>
         </div>
         <div class="col-12">
@@ -90,7 +91,7 @@
           <label>收货地址</label>
           <input id="addr" type="text" placeholder="请输入收货地址" />
         </div>
-        <div class="col-6">
+        <div class="col-5">
           <label>付款方式</label>
           <select id="pay">
             <option value="现金">现金</option>
@@ -98,9 +99,13 @@
             <option value="易换">易换</option>
           </select>
         </div>
-        <div class="col-6">
+        <div class="col-4">
           <label>送达时间（默认：尽快）</label>
           <input id="eta" type="text" placeholder="留空=尽快；或填写 例如：今天19:30" />
+        </div>
+        <div class="col-3">
+          <label>总金额（可选）</label>
+          <input id="total" type="text" placeholder="例：700" />
         </div>
         <div class="col-12">
           <label>备注（可留空）</label>
@@ -122,13 +127,13 @@
           <a class="btn ghost" href="https://t.me/order168" target="_blank">返回 @order168 粘贴发送</a>
         </div>
         <div class="col-12 msg" id="msg"></div>
-        <div class="col-12 muted">客户姓名默认使用你的 Telegram 昵称/用户名；如无特别备注，送达时间默认“尽快”。</div>
+        <div class="col-12 muted">客户姓名默认使用你的 Telegram 昵称/用户名；如无特别备注，送达时间默认“尽快”。粉类代码：A 圆粉（默认）、B 河粉。</div>
       </div>
     </div>
   </div>
 
   <script>
-    // 菜单数据（来自你的表；修正L4/L7英文名）
+    // 菜单数据
     const MENU = [
       {cat: 'Deluxe Guilin Rice Noodles', items: [
         {code:'G0', cn:'豪华桂林米粉', en:'Deluxe Guilin Rice Noodles', price:'600p'},
@@ -209,7 +214,7 @@
       const cn = opt.dataset.cn;
       const en = opt.dataset.en;
       const qty = Math.max(1, parseInt(document.getElementById('qty').value || '1', 10));
-      const noodle = document.getElementById('noodleCode').value; // A/B/''
+      const noodle = document.getElementById('noodleCode').value || 'A'; // 默认A 圆粉
       const taste = document.getElementById('taste').value.trim();
       items.push({code, cn, en, qty, noodle, taste});
       renderTable();
@@ -224,6 +229,7 @@
       const pay = document.getElementById('pay').value;
       const eta = document.getElementById('eta').value.trim();
       const note = document.getElementById('note').value.trim();
+      const total = document.getElementById('total').value.trim();
       const lines = [];
       lines.push('收货地址：' + (addr || ''));
       lines.push('菜品与数量：');
@@ -241,6 +247,7 @@
       }
       lines.push('付款方式：' + pay);
       lines.push('送达时间：' + (eta || '尽快（如需指定时间请注明）'));
+      if(total) lines.push('总金额：' + total);
       lines.push('备注：' + (note || '（可留空）'));
       return lines.join('\n');
     }
